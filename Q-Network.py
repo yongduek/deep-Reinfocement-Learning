@@ -99,7 +99,7 @@ print ('Percent of succesful episodes: ' , str(sum(rList)/num_episodes) , '%')
 
 # ### Some statistics on network performance
 
-# We can see that the network beings to consistly reach the goal around the 750 episode mark.
+# We can see that the network beings to consistantly reach the goal around the 750 episode mark.
 
 # In[384]:
 
