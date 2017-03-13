@@ -1,6 +1,15 @@
 import gym
 import numpy as np
 import tensorflow as tf
+import tflearn
+
+gym.envs.registration.register(
+    id='FrozenLake-noSlippery',
+    entry_point='gym.envs.toy_text:FrozenLakeEnv',
+    kwargs={'map_name' : '4x4', 'is_slippery' : False},
+    max_episode_steps=100,
+    reward_threshold=0.78, # optimum = .8196
+)
 
 def onehot(x):
     '''
@@ -13,25 +22,9 @@ env = gym.make('FrozenLake-v0')
 input_size = env.observation_space.n
 output_size = env.action_space.n
 
-# make TF network for approximating Q function
+# make TF network model for approximating Q function
 
-tf.reset_default_graph()
-X = tf.placeholder (shape=[1,input_size], dtype=tf.float32)
-W = tf.Variable(tf.random_uniform([input_size, output_size], 0, 0.01))
-
-Qout = tf.matmul (X, W) # output of Q prediction
-maxQ = tf.argmax (Qout, 1)
-
-Y = tf.placeholder (shape=[1,output_size], dtype=tf.float32)
-loss = tf.reduce_sum (tf.square (Y-Qout))
-
-learning_rate = 0.01
-trainer = tf.train.GradientDescentOptimizer (learning_rate=learning_rate)
-updateQmodel = trainer.minimize(loss=loss)
-init = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init)
-
+Qmodel
 '''
    Deep Q-learning
    Q network: input=state/observation, output = Q value of actions
@@ -48,48 +41,38 @@ sess.run(init)
     endfor
 '''
 
+qnetwork = None
+
 episode_count = 100
 
 env.seed(0)
-env.reset()
 reward = 0
 done = False
-eps = 0.1    # epsilon-greedy
 gamma = 0.99
 
 for i in range (episode_count):
     state = env.reset() # ob denotes the state of the env
     step_count = 1
     while True:
-        # action selection
-        if np.random.uniform() < eps:
+        def eGreedy(env, st, qnetwork, eps=0.1):
             action = env.action_space.sample()
-        else:
-            predict = sess.run (Qout, feed_dict={X: onehot(state)})
-            action = np.argmax(predict)
+            if np.random.uniform() > eps:
+                qs = qnetwork.predict(st)
+                action = np.argmax(qs)
+            #
+            return action
+        #
+
+        action = eGreedy(env, state, qnetwork)
 
         # do action
-        nxtstate, reward, done, _ = env.step (action)
+        stp1, reward, done, _ = env.step (action)
 
         print('{}/i{}='.format(step_count, i),
-              #' predict=', predict,
               ' a=', action,
-              ' ob=', nxtstate,
+              ' stp1=', stp1,
               ' reward=', reward, ' done=', done)
-
-        y = np.zeros((1,output_size))
-        if done:
-            y[0,action] = reward
-        else:
-            predict = sess.run (Qout, feed_dict={X: onehot(nxtstate)})
-            y[0,action] = reward + gamma * np.max(predict)
-
-        x = onehot(state)
-        sess.run(updateQmodel, feed_dict={X:x, Y:y})
 
 
         if done:
             break
-
-        state = nxtstate
-        step_count += 1
