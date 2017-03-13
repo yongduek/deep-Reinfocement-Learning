@@ -1,15 +1,15 @@
 import gym
+from gym.envs.registration import register
 import numpy as np
 import tensorflow as tf
 import tflearn
 
-gym.envs.registration.register(
-    id='FrozenLake-noSlippery',
+register(
+    id='FrozenLake-v44',
     entry_point='gym.envs.toy_text:FrozenLakeEnv',
-    kwargs={'map_name' : '4x4', 'is_slippery' : False},
-    max_episode_steps=100,
-    reward_threshold=0.78, # optimum = .8196
+    kwargs={'map_name' : '4x4', 'is_slippery' : False}
 )
+    #reward_threshold=0.78, # optimum = .8196
 
 def onehot(x):
     '''
