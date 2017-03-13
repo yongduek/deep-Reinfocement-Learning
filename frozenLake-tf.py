@@ -18,13 +18,12 @@ def onehot(x):
     '''
     return np.identity(16)[x:x+1]
 
-env = gym.make('FrozenLake-v0')
+env = gym.make('FrozenLake-v44')
 input_size = env.observation_space.n
 output_size = env.action_space.n
 
 # make TF network model for approximating Q function
 
-Qmodel
 '''
    Deep Q-learning
    Q network: input=state/observation, output = Q value of actions
@@ -43,20 +42,21 @@ Qmodel
 
 qnetwork = None
 
-episode_count = 100
 
 env.seed(0)
 reward = 0
 done = False
 gamma = 0.99
 
+episode_count = 1
 for i in range (episode_count):
     state = env.reset() # ob denotes the state of the env
+    env.render()
     step_count = 1
     while True:
         def eGreedy(env, st, qnetwork, eps=0.1):
             action = env.action_space.sample()
-            if np.random.uniform() > eps:
+            if (qnetwork is not None) and (np.random.uniform() > eps):
                 qs = qnetwork.predict(st)
                 action = np.argmax(qs)
             #
@@ -67,6 +67,8 @@ for i in range (episode_count):
 
         # do action
         stp1, reward, done, _ = env.step (action)
+
+        env.render()
 
         print('{}/i{}='.format(step_count, i),
               ' a=', action,
