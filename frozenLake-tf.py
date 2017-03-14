@@ -127,13 +127,22 @@ class Qfunction():
         return
     #
 
-    def eGreedy(self, env, state, eps=0.1):
-        action = env.action_space.sample()
-        if (self.model is not None) and (np.random.uniform() > eps):
-            qs = self.predict(state, action)
-            action = np.argmax(qs)
-            #
-        return action
+    def eGreedy(self, state, eps=0.1):
+        a = None # action
+        while True:
+            u = np.random.uniform()
+            if (self.model is not None) and (u < eps):
+                a = np.random.randint(0, self.nactions)
+                #print ('eGreedy: eps={} action = {} by u={}'.format(eps, a, u))
+            else:
+                qvalues = [self.predict(state, a) + 0.001*np.random.uniform()
+                           for a in range(self.nactions)]
+                a = np.argmax(qvalues)
+                #print ('eGreedy: qvalues={} and action = {}'.format(qvalues, a))
+
+            if not (state==0 and (a==0 or a==3)): break
+        #
+        return a
         #
     #
 # // end Qfunction
@@ -150,24 +159,26 @@ reward = 0
 done = False
 gamma = 0.99
 
+goal_found = False
 episode_count = 10000
 for ep in range (episode_count):
     state = env.reset() # ob denotes the state of the env
-    action = qnetwork.eGreedy(env, state)
+    action = qnetwork.eGreedy(state)
     env.render()
-    step_count = 1
+    step_count = 0
     while True:
+        step_count += 1
         # carry out the action
         state2, reward, done, _ = env.step (action)
         env.render()
         # choose another action from stp1 (for SARSA)
-        action2 = qnetwork.eGreedy(env, state2, 0.3 if ep<100 else 0.1)
+        action2 = qnetwork.eGreedy(state2, 0.5 if not goal_found else 0.1)
 
         print('>>> {}/ep:{}='.format(step_count, ep),
               ' (s:{},a:{},r:{},d:{}; s\':{},a\'{})'.format(state, action, reward, done, state2, action2))
 
         # experiment: negative reinforcement!
-        if done and not (reward>0):
+        if False and done and not (reward>0):
             reward += -1
 
         targetValue = reward
@@ -182,7 +193,8 @@ for ep in range (episode_count):
 
         if done:
             if reward>0:
-                print ('!!! final location visited !!!\n\n\n')
+                goal_found = True
+                print ('\n\n\n\n\n!!! final location visited !!!\n\n\n')
 
             print ('-- Episode finished. Q-Network will learn the data.')
             qnetwork.learn()
